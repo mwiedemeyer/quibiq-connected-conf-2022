@@ -1,0 +1,64 @@
+trigger:
+  branches:
+    include:
+      - "*"
+  paths:
+    include:
+      - workflowapp/*
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  - name: "ServiceConnectionName"
+    value: "TODO: Add Service Connection Name here"
+  - name: "LogicAppName"
+    value: "TODO: Add Logic App Name here"
+
+stages:
+  - stage: Build
+    jobs:
+      - job: Build
+        displayName: Build
+        steps:
+          - task: CopyFiles@2
+            displayName: Copy workflow files
+            inputs:
+              SourceFolder: "$(System.DefaultWorkingDirectory)/workflowapp"
+              Contents: |
+                **
+                !**/.vscode/**
+                !**/.git/**
+                !.gitignore
+                !.funcignore
+              TargetFolder: "$(Build.ArtifactStagingDirectory)"
+              CleanTargetFolder: true
+          - task: ArchiveFiles@2
+            displayName: Build zip file for deployment
+            inputs:
+              rootFolderOrFile: "$(Build.ArtifactStagingDirectory)"
+              includeRootFolder: false
+              archiveType: "zip"
+              archiveFile: "$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip"
+              replaceExistingArchive: true
+          - publish: "$(Build.ArtifactStagingDirectory)"
+            displayName: "Publish zip"
+            artifact: drop
+
+  - stage: Deploy
+    jobs:
+      - deployment: Deployment
+        displayName: Deploy LogicApp Workflows
+        environment: Conf
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - task: AzureFunctionApp@1
+                  displayName: Deploy LogicApp Workflows
+                  inputs:
+                    azureSubscription: $(ServiceConnectionName)
+                    appType: "workflowapp"
+                    appName: $(LogicAppName)
+                    package: "$(Pipeline.Workspace)/**/*.zip"
+                    deploymentMethod: "zipDeploy"

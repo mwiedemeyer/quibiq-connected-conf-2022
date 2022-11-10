@@ -1,0 +1,43 @@
+trigger:
+  branches:
+    include:
+      - "*"
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  - name: "ServiceConnectionName"
+    value: "TODO: Add Service Connection Name here"
+
+stages:
+  - stage: Validate
+    jobs:
+      - job: ValidateBicep
+        displayName: Validate Bicep
+        steps:
+          - task: AzureCLI@2
+            displayName: "Validate Bicep with what-if"
+            inputs:
+              azureSubscription: $(ServiceConnectionName)
+              scriptType: "bash"
+              scriptLocation: "inlineScript"
+              inlineScript: "az deployment sub what-if --template-file ./main.bicep --location westeurope"
+
+  - stage: Deploy
+    jobs:
+      - deployment: Deployment
+        displayName: Deploy Azure infrastructure
+        environment: Conf
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+                - task: AzureCLI@2
+                  displayName: "Deploy Azure infrastructure"
+                  inputs:
+                    azureSubscription: $(ServiceConnectionName)
+                    scriptType: "bash"
+                    scriptLocation: "inlineScript"
+                    inlineScript: "az deployment sub create --template-file ./main.bicep --location westeurope"

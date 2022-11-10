@@ -1,2 +1,5 @@
-# quibiq-connected-conf-2022
-Meine Session zu Bicep auf der Quibiq CONNECTED Konferenz
+# Quibiq CONNECTED Konferenz 2022
+
+Hier gibt es den Code zu meiner Session **In 3 Schritten mit Bicep zur Azure Integration Infrastruktur**.
+
+> Zur Konferenz: https://www.quibiq.de/aktuelles/quievents/connected/
